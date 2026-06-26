@@ -1,1 +1,68 @@
+version: 2.1
 
+jobs:
+  build:
+    docker:
+      - image: cimg/node:20.11
+    steps:
+      - checkout
+      - run:
+          name: Install dependencies
+          command: npm install
+      - run:
+          name: Build project
+          command: npm run build
+
+  test:
+    docker:
+      - image: cimg/node:20.11
+    steps:
+      - checkout
+      - run:
+          name: Run unit tests
+          command: npm test
+
+  lint:
+    docker:
+      - image: cimg/node:20.11
+    steps:
+      - checkout
+      - run:
+          name: Run linter
+          command: npm run lint
+
+  deploy-staging:
+    docker:
+      - image: cimg/node:20.11
+    steps:
+      - checkout
+      - run:
+          name: Deploy to staging
+          command: echo "Deploying to staging environment..."
+
+  deploy-production:
+    docker:
+      - image: cimg/node:20.11
+    steps:
+      - checkout
+      - run:
+          name: Deploy to production
+          command: echo "Deploying to production environment..."
+
+workflows:
+  build-test-deploy:
+    jobs:
+      - build
+      - lint
+      - test:
+          requires:
+            - build
+      - deploy-staging:
+          requires:
+            - test
+      - deploy-production:
+          requires:
+            - deploy-staging
+          filters:
+            branches:
+              only: main

@@ -1,0 +1,410 @@
+trigger:
+  - main
+
+pool:
+  vmImage: ubuntu-latest
+
+stages:
+
+  - stage: Preflight
+    displayName: 'Preflight Checks'
+    jobs:
+      - job: ValidateConfig
+        displayName: 'Validate config files'
+        steps:
+          - script: echo "Validating YAML configs"
+            displayName: 'Validate YAML'
+          - script: echo "Validating JSON schemas"
+            displayName: 'Validate JSON schemas'
+          - script: echo "Checking env variables"
+            displayName: 'Check env variables'
+          - script: echo "Validating Dockerfile"
+            displayName: 'Validate Dockerfile'
+
+      - job: DependencyAudit
+        displayName: 'Dependency audit'
+        steps:
+          - script: echo "Checking for outdated packages"
+            displayName: 'Check outdated packages'
+          - script: echo "Auditing npm vulnerabilities"
+            displayName: 'NPM audit'
+          - script: echo "License compliance check"
+            displayName: 'License check'
+          - script: echo "Generating dependency graph"
+            displayName: 'Dependency graph'
+
+      - job: SecretsCheck
+        displayName: 'Secrets detection'
+        steps:
+          - script: echo "Scanning for hardcoded secrets"
+            displayName: 'Scan secrets'
+          - script: echo "Checking .gitignore coverage"
+            displayName: 'Check .gitignore'
+          - script: echo "Validating vault references"
+            displayName: 'Validate vault refs'
+
+  - stage: Build
+    displayName: 'Build'
+    dependsOn: Preflight
+    jobs:
+      - job: CompileBackend
+        displayName: 'Compile backend'
+        steps:
+          - script: echo "Installing backend dependencies"
+            displayName: 'Install dependencies'
+          - script: echo "Compiling TypeScript"
+            displayName: 'Compile TypeScript'
+          - script: echo "Generating API types"
+            displayName: 'Generate API types'
+          - script: echo "Building backend bundle"
+            displayName: 'Build bundle'
+          - script: echo "Persisting backend artifacts"
+            displayName: 'Persist artifacts'
+
+      - job: CompileFrontend
+        displayName: 'Compile frontend'
+        steps:
+          - script: echo "Installing frontend dependencies"
+            displayName: 'Install dependencies'
+          - script: echo "Generating icon sprites"
+            displayName: 'Generate sprites'
+          - script: echo "Building frontend bundle"
+            displayName: 'Build bundle'
+          - script: echo "Optimizing assets"
+            displayName: 'Optimize assets'
+          - script: echo "Persisting frontend artifacts"
+            displayName: 'Persist artifacts'
+
+      - job: BuildDockerImages
+        displayName: 'Build Docker images'
+        dependsOn:
+          - CompileBackend
+          - CompileFrontend
+        steps:
+          - script: echo "Building backend image"
+            displayName: 'Build backend image'
+          - script: echo "Building frontend image"
+            displayName: 'Build frontend image'
+          - script: echo "Building nginx image"
+            displayName: 'Build nginx image'
+          - script: echo "Tagging images"
+            displayName: 'Tag images'
+          - script: echo "Pushing to registry"
+            displayName: 'Push to registry'
+
+      - job: BuildMobile
+        displayName: 'Build mobile app'
+        steps:
+          - script: echo "Installing mobile dependencies"
+            displayName: 'Install dependencies'
+          - script: echo "Building iOS bundle"
+            displayName: 'Build iOS bundle'
+          - script: echo "Building Android bundle"
+            displayName: 'Build Android bundle'
+          - script: echo "Signing bundles"
+            displayName: 'Sign bundles'
+
+  - stage: CodeQuality
+    displayName: 'Code Quality'
+    dependsOn: []
+    jobs:
+      - job: Lint
+        displayName: 'Linting'
+        steps:
+          - script: echo "Running ESLint on backend"
+            displayName: 'ESLint backend'
+          - script: echo "Running ESLint on frontend"
+            displayName: 'ESLint frontend'
+          - script: echo "Running Stylelint"
+            displayName: 'Stylelint'
+          - script: echo "Checking Prettier formatting"
+            displayName: 'Prettier'
+          - script: echo "Checking import order"
+            displayName: 'Import order'
+
+      - job: StaticAnalysis
+        displayName: 'Static analysis'
+        steps:
+          - script: echo "Running SonarQube scan"
+            displayName: 'SonarQube'
+          - script: echo "Running CodeClimate"
+            displayName: 'CodeClimate'
+          - script: echo "Checking cyclomatic complexity"
+            displayName: 'Complexity check'
+          - script: echo "Dead code detection"
+            displayName: 'Dead code detection'
+
+      - job: SecurityScan
+        displayName: 'Security scan'
+        steps:
+          - script: echo "Running SAST analysis"
+            displayName: 'SAST'
+          - script: echo "Running DAST analysis"
+            displayName: 'DAST'
+          - script: echo "Checking CVEs in dependencies"
+            displayName: 'CVE check'
+          - script: echo "Container image scan"
+            displayName: 'Container scan'
+          - script: echo "Generating security report"
+            displayName: 'Security report'
+
+      - job: AccessibilityCheck
+        displayName: 'Accessibility'
+        steps:
+          - script: echo "Running axe accessibility scan"
+            displayName: 'axe scan'
+          - script: echo "Checking color contrast"
+            displayName: 'Color contrast'
+          - script: echo "Checking ARIA labels"
+            displayName: 'ARIA labels'
+
+  - stage: Test
+    displayName: 'Test'
+    dependsOn: Build
+    jobs:
+      - job: UnitTestsBackend
+        displayName: 'Unit tests — backend'
+        steps:
+          - script: echo "Running backend unit tests"
+            displayName: 'Run tests'
+          - script: echo "Generating coverage report"
+            displayName: 'Coverage report'
+          - script: echo "Publishing test results"
+            displayName: 'Publish results'
+          - script: echo "Checking coverage threshold"
+            displayName: 'Coverage threshold'
+
+      - job: UnitTestsFrontend
+        displayName: 'Unit tests — frontend'
+        steps:
+          - script: echo "Running frontend unit tests"
+            displayName: 'Run tests'
+          - script: echo "Running snapshot tests"
+            displayName: 'Snapshot tests'
+          - script: echo "Generating coverage report"
+            displayName: 'Coverage report'
+          - script: echo "Publishing test results"
+            displayName: 'Publish results'
+
+      - job: IntegrationTests
+        displayName: 'Integration tests'
+        steps:
+          - script: echo "Starting PostgreSQL"
+            displayName: 'Start PostgreSQL'
+          - script: echo "Starting Redis"
+            displayName: 'Start Redis'
+          - script: echo "Running migrations"
+            displayName: 'Run migrations'
+          - script: echo "Seeding test data"
+            displayName: 'Seed data'
+          - script: echo "Running integration tests"
+            displayName: 'Run tests'
+          - script: echo "Cleanup"
+            displayName: 'Cleanup'
+
+      - job: APITests
+        displayName: 'API contract tests'
+        steps:
+          - script: echo "Starting API server"
+            displayName: 'Start API server'
+          - script: echo "Running Pact contract tests"
+            displayName: 'Pact tests'
+          - script: echo "Validating OpenAPI spec"
+            displayName: 'Validate OpenAPI'
+          - script: echo "Publishing pact results"
+            displayName: 'Publish results'
+
+      - job: E2EChrome
+        displayName: 'E2E — Chrome'
+        steps:
+          - script: echo "Installing Playwright"
+            displayName: 'Install Playwright'
+          - script: echo "Running E2E tests in Chrome"
+            displayName: 'Run tests'
+          - script: echo "Publishing screenshots"
+            displayName: 'Publish screenshots'
+          - script: echo "Publishing video recordings"
+            displayName: 'Publish videos'
+
+      - job: E2EFirefox
+        displayName: 'E2E — Firefox'
+        steps:
+          - script: echo "Installing Playwright"
+            displayName: 'Install Playwright'
+          - script: echo "Running E2E tests in Firefox"
+            displayName: 'Run tests'
+          - script: echo "Publishing screenshots"
+            displayName: 'Publish screenshots'
+
+      - job: E2ESafari
+        displayName: 'E2E — Safari (WebKit)'
+        steps:
+          - script: echo "Installing Playwright"
+            displayName: 'Install Playwright'
+          - script: echo "Running E2E tests in WebKit"
+            displayName: 'Run tests'
+          - script: echo "Publishing screenshots"
+            displayName: 'Publish screenshots'
+
+      - job: PerformanceTests
+        displayName: 'Performance tests'
+        steps:
+          - script: echo "Running k6 load tests"
+            displayName: 'k6 load tests'
+          - script: echo "Running Lighthouse CI"
+            displayName: 'Lighthouse CI'
+          - script: echo "Checking bundle size"
+            displayName: 'Bundle size check'
+          - script: echo "Analyzing performance report"
+            displayName: 'Analyze report'
+
+      - job: MobileTests
+        displayName: 'Mobile tests'
+        steps:
+          - script: echo "Running iOS tests"
+            displayName: 'iOS tests'
+          - script: echo "Running Android tests"
+            displayName: 'Android tests'
+          - script: echo "Publishing results"
+            displayName: 'Publish results'
+
+  - stage: DeployDev
+    displayName: 'Deploy to Dev'
+    dependsOn: Build
+    jobs:
+      - deployment: DeployDev
+        displayName: 'Deploy to dev'
+        environment: dev
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+                - script: echo "Pulling images"
+                  displayName: 'Pull images'
+                - script: echo "Deploying backend"
+                  displayName: 'Deploy backend'
+                - script: echo "Deploying frontend"
+                  displayName: 'Deploy frontend'
+                - script: echo "Running migrations"
+                  displayName: 'Run migrations'
+                - script: echo "Restarting services"
+                  displayName: 'Restart services'
+                - script: echo "Health check"
+                  displayName: 'Health check'
+
+  - stage: DeployStaging
+    displayName: 'Deploy to Staging'
+    dependsOn:
+      - Test
+      - CodeQuality
+      - DeployDev
+    jobs:
+      - deployment: DeployApp
+        displayName: 'Deploy app'
+        environment: staging
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+                - script: echo "Pulling images"
+                  displayName: 'Pull images'
+                - script: echo "Deploying backend"
+                  displayName: 'Deploy backend'
+                - script: echo "Deploying frontend"
+                  displayName: 'Deploy frontend'
+                - script: echo "Running migrations"
+                  displayName: 'Run migrations'
+                - script: echo "Warming up cache"
+                  displayName: 'Warm up cache'
+                - script: echo "Restarting services"
+                  displayName: 'Restart services'
+
+      - job: SmokeTests
+        displayName: 'Smoke tests'
+        dependsOn: DeployApp
+        steps:
+          - script: echo "Checking health endpoints"
+            displayName: 'Health endpoints'
+          - script: echo "Running critical path tests"
+            displayName: 'Critical path tests'
+          - script: echo "Checking error rates"
+            displayName: 'Error rate check'
+
+      - job: NotifyStaging
+        displayName: 'Notify staging deploy'
+        dependsOn: SmokeTests
+        steps:
+          - script: echo "Posting to Slack"
+            displayName: 'Slack notification'
+          - script: echo "Updating Jira tickets"
+            displayName: 'Update Jira'
+
+  - stage: DeployProduction
+    displayName: 'Deploy to Production'
+    dependsOn: DeployStaging
+    jobs:
+      - deployment: DeployBackend
+        displayName: 'Deploy backend'
+        environment: production
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+                - script: echo "Blue/green deploy backend"
+                  displayName: 'Blue/green deploy'
+                - script: echo "Running migrations"
+                  displayName: 'Run migrations'
+                - script: echo "Health check"
+                  displayName: 'Health check'
+                - script: echo "Switch traffic 10%"
+                  displayName: 'Canary 10%'
+                - script: echo "Switch traffic 50%"
+                  displayName: 'Canary 50%'
+                - script: echo "Switch traffic 100%"
+                  displayName: 'Full rollout'
+
+      - deployment: DeployFrontend
+        displayName: 'Deploy frontend'
+        environment: production
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+                - script: echo "Uploading assets to CDN"
+                  displayName: 'Upload to CDN'
+                - script: echo "Invalidating CDN cache"
+                  displayName: 'Invalidate CDN'
+                - script: echo "Deploying frontend"
+                  displayName: 'Deploy frontend'
+                - script: echo "Health check"
+                  displayName: 'Health check'
+
+      - job: PostDeployTests
+        displayName: 'Post-deploy tests'
+        dependsOn:
+          - DeployBackend
+          - DeployFrontend
+        steps:
+          - script: echo "Running production smoke tests"
+            displayName: 'Smoke tests'
+          - script: echo "Checking Datadog metrics"
+            displayName: 'Check metrics'
+          - script: echo "Verifying Sentry error rate"
+            displayName: 'Error rate check'
+          - script: echo "Running synthetic monitors"
+            displayName: 'Synthetic monitors'
+
+      - job: NotifyProduction
+        displayName: 'Notify production deploy'
+        dependsOn: PostDeployTests
+        steps:
+          - script: echo "Posting to Slack"
+            displayName: 'Slack notification'
+          - script: echo "Creating GitHub release"
+            displayName: 'GitHub release'
+          - script: echo "Updating Jira tickets"
+            displayName: 'Update Jira'
+          - script: echo "Generating changelog"
+            displayName: 'Generate changelog'
+          - script: echo "Notifying stakeholders"
+            displayName: 'Notify stakeholders'

@@ -30,9 +30,6 @@ jobs:
     steps:
       - checkout
       - run:
-          name: Install dependencies
-          command: npm ci
-      - run:
           name: Run ESLint
           command: echo "ESLint passed"
       - run:

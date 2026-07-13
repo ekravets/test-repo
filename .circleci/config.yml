@@ -1,154 +1,31 @@
+# Use the latest 2.1 version of CircleCI pipeline process engine.
+# See: https://circleci.com/docs/reference/configuration-reference
 version: 2.1
 
+# Define a job to be invoked later in a workflow.
+# See: https://circleci.com/docs/guides/orchestrate/jobs-steps/#jobs-overview & https://circleci.com/docs/reference/configuration-reference/#jobs
 jobs:
-  build:
+  say-hello:
+    # Specify the execution environment. You can specify an image from Docker Hub or use one of our convenience images from CircleCI's Developer Hub.
+    # See: https://circleci.com/docs/guides/execution-managed/executor-intro/ & https://circleci.com/docs/reference/configuration-reference/#executor-job
     docker:
-      - image: cimg/node:20.11
+      # Specify the version you desire here
+      # See: https://circleci.com/developer/images/image/cimg/base
+      - image: cimg/base:current
+
+    # Add steps to the job
+    # See: https://circleci.com/docs/guides/orchestrate/jobs-steps/#steps-overview & https://circleci.com/docs/reference/configuration-reference/#steps
     steps:
+      # Checkout the code as the first step.
       - checkout
       - run:
-          name: Install dependencies
-          command: npm ci
-      - run:
-          name: Compile TypeScript
-          command: npx tsc --noEmit
-      - run:
-          name: Build project
-          command: npm run build
-      - run:
-          name: Generate build artifacts
-          command: ls -la dist/
-      - persist_to_workspace:
-          root: .
-          paths:
-            - dist
-            - node_modules
+          name: "Say hello"
+          command: "echo Hello, World!"
 
-  lint:
-    docker:
-      - image: cimg/node:20.11
-    steps:
-      - checkout
-      - run:
-          name: Install dependencies
-          command: npm ci
-      - run:
-          name: Run ESLint
-          command: echo "ESLint passed"
-      - run:
-          name: Check formatting (Prettier)
-          command: echo "Prettier check passed"
-      - run:
-          name: Check types
-          command: echo "Type check passed"
-
-  test-unit:
-    docker:
-      - image: cimg/node:20.11
-    steps:
-      - checkout
-      - attach_workspace:
-          at: .
-      - run:
-          name: Install dependencies
-          command: npm ci
-      - run:
-          name: Run unit tests
-          command: echo "Unit tests passed"
-      - run:
-          name: Generate coverage report
-          command: echo "Coverage report generated"
-      - run:
-          name: Upload coverage to Codecov
-          command: echo "Coverage uploaded"
-
-  test-integration:
-    docker:
-      - image: cimg/node:20.11
-      - image: cimg/postgres:15.0
-        environment:
-          POSTGRES_USER: testuser
-          POSTGRES_PASSWORD: testpass
-          POSTGRES_DB: testdb
-    steps:
-      - checkout
-      - attach_workspace:
-          at: .
-      - run:
-          name: Wait for DB
-          command: sleep 2
-      - run:
-          name: Run migrations
-          command: echo "Migrations applied"
-      - run:
-          name: Run integration tests
-          command: echo "Integration tests passed"
-      - run:
-          name: Cleanup test data
-          command: echo "Cleanup done"
-
-  deploy-staging:
-    docker:
-      - image: cimg/node:20.11
-    steps:
-      - checkout
-      - attach_workspace:
-          at: .
-      - run:
-          name: Configure AWS credentials
-          command: echo "AWS configured"
-      - run:
-          name: Deploy to staging
-          command: echo "Deployed to staging"
-      - run:
-          name: Run smoke tests
-          command: echo "Smoke tests passed"
-      - run:
-          name: Notify Slack
-          command: echo "Slack notified"
-
-  deploy-production:
-    docker:
-      - image: cimg/node:20.11
-    steps:
-      - checkout
-      - attach_workspace:
-          at: .
-      - run:
-          name: Configure AWS credentials
-          command: echo "AWS configured"
-      - run:
-          name: Blue/green deploy
-          command: echo "Blue/green deploy started"
-      - run:
-          name: Health check
-          command: echo "Health check passed"
-      - run:
-          name: Switch traffic to new version
-          command: echo "Traffic switched"
-      - run:
-          name: Notify Slack
-          command: echo "Production deploy complete"
-
+# Orchestrate jobs using workflows
+# See: https://circleci.com/docs/guides/orchestrate/workflows/ & https://circleci.com/docs/reference/configuration-reference/#workflows
 workflows:
-  build-test-deploy:
+  say-hello-workflow: # This is the name of the workflow, feel free to change it to better match your workflow.
+    # Inside the workflow, you define the jobs you want to run.
     jobs:
-      - build
-      - lint
-      - test-unit:
-          requires:
-            - build
-      - test-integration:
-          requires:
-            - build
-      - deploy-staging:
-          requires:
-            - lint
-            - test-unit
-            - test-integration
-      - deploy-production:
-          requires:
-            - deploy-staging
-          filters:
-            branches:
-              only: main
+      - say-hello
